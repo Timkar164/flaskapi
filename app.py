@@ -8,6 +8,7 @@ import psycopg2
 from psycopg2.extras import DictCursor
 from flask import Flask , render_template ,request
 from psycopg2.errors import UndefinedColumn
+from flask_cors import CORS
 
 host = 'ec2-54-164-22-242.compute-1.amazonaws.com'
 port = '5432'
@@ -137,6 +138,7 @@ def api_update(name,args):
     return sql_update(str(name),param_update(dict(args)))
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/get_data')
 def index():
