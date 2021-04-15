@@ -383,8 +383,8 @@ def index3():
  return  api_update(str(name),arg)
 
 @app.route('/bot')
-def bot():
- global bott
+def bote():
+ bott =Bot()
  arg = dict(request.args)
  com = arg['command']
  rez=bott.main(com)
@@ -393,5 +393,5 @@ def bot():
 
 
 if __name__=="__main__":
-    bott =Bot()
+    
     app.run(host='0.0.0.0', port=8000)
