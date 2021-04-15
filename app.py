@@ -384,7 +384,7 @@ def index3():
 
 @app.route('/bot')
 def bot():
-
+ global bott
  arg = dict(request.args)
  com = arg['command']
  rez=bott.main(com)
