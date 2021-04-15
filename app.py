@@ -387,11 +387,11 @@ def bot():
 
  arg = dict(request.args)
  com = arg['command']
- rez=bot.main(com)
+ rez=bott.main(com)
  return  {'response':True,'bot':rez}
 
 
 
 if __name__=="__main__":
-    bot =Bot()
+    bott =Bot()
     app.run(host='0.0.0.0', port=8000)
