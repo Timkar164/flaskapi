@@ -252,7 +252,7 @@ def reg():
     token = urandom(16).hex()
     arg['token']=token
     sql_insert('reg_users', param_insert(arg))
-    send_emails(email, 'password change', 'http://localhost:4200/set_password?token=' + token)
+    send_emails(email, 'password change', 'https://miriteam-smz.herokuapp.com/set_password?token=' + token)
     return {'response': True}
 
 @app.route('/get_action')
