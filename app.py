@@ -10,8 +10,12 @@ from flask import Flask , render_template ,request
 from psycopg2.errors import UndefinedColumn
 from flask_cors import CORS
 from hashlib import sha256
+import smtplib
+from os import urandom
 import time
 
+mailerLogin = 'dima160899@yandex.ru'
+mailerPass = 'whzkcbkjuspbgnra'
 host = 'ec2-54-164-22-242.compute-1.amazonaws.com'
 port = '5432'
 database = 'de8k09g3q8cu38'
@@ -219,6 +223,17 @@ def indexmes():
  
  return  {'response':True,'items':param['items']}'''
 
+def send_emails(email_to, title, msg):
+
+    server = smtplib.SMTP('smtp.yandex.ru', 587)
+    server.ehlo()  # Кстати, зачем это?
+    server.starttls()
+    server.login(mailerLogin, mailerPass)
+
+    message = f'From: {mailerLogin}\nTo: {email_to}\nSubject: {title}\n\n{msg}'
+    server.sendmail(mailerLogin, email_to, message)
+    server.quit()
+
 @app.route('/login')
 def log():
     arg = dict(request.args)
@@ -229,7 +244,17 @@ def log():
      return rez
     else:
      return {'response':False,'items':'error login'}
- 
+
+@app.route('/registration')
+def reg():
+    arg = dict(request.args)
+    email = arg['email'] + ''
+    token = urandom(16).hex()
+    arg['token']=token
+    sql_insert('reg_users', param_insert(arg))
+    send_emails(email, 'password change', 'http://localhost:4200/set_password?token=' + token)
+    return {'response': True}
+
 @app.route('/get_action')
 def indexact():
  global test
@@ -357,6 +382,7 @@ def index():
  arg = dict(request.args)
  name = arg['table']
  del(arg['table'])
+ print(arg)
  return  api_select(str(name),arg)
 
 @app.route('/set_data')
@@ -374,6 +400,20 @@ def index2():
  del(arg['table'])
  return  api_delet(str(name),arg)
  
+@app.route('/set_password')
+def set_password():
+    arg = dict(request.args)
+    token = arg['token']
+    passw = arg['password']
+    conn = psycopg2.connect(dbname=database, user=user,
+                            password=password, host=host)
+    cursor = conn.cursor(cursor_factory=DictCursor)
+    update = f"UPDATE reg_users  SET password = '{passw}', token_valid = '0'  WHERE token = '{token}'"
+    cursor.execute(update)
+    conn.commit()
+    conn.close()
+    cursor.close()
+    return {'response': True}
 
 @app.route('/update_data')
 def index3():
