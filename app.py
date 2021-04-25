@@ -13,7 +13,14 @@ from hashlib import sha256
 import smtplib
 from os import urandom
 import time
+import uuid
+import requests
+import json
+true = True
+false = False
+null =False
 
+legalId = '45e66ad0-4e11-4e2b-8dbd-35f8021098bd'
 mailerLogin = 'dima160899@yandex.ru'
 mailerPass = 'whzkcbkjuspbgnra'
 host = 'ec2-54-164-22-242.compute-1.amazonaws.com'
@@ -225,6 +232,162 @@ def is_token_valid(token):
         return False
     else:
         return bool(int(reg_user['items'][0]['token_valid']))
+    
+def get_random():
+    return uuid.uuid4().hex[0:12]
+def get_token():
+ url = "http://185.209.114.26:9001/auth/realms/plutdev/protocol/openid-connect/token"
+
+ payload = {'username': 'agent7',
+ 'password': 'agent7',
+ 'grant_type': 'password',
+ 'tocken_type': 'bearer',
+ 'client_secret': 'e5d2b5c1-4211-48aa-b272-91d75f4ab0e5',
+ 'client_id': 'agentService'}
+ files = [
+
+ ]
+ headers = {
+  'Content-Type': 'application/x-www-form-urlencoded'
+ }
+
+ response = requests.request("POST", url, headers=headers, data = payload, files = files)
+ rezalt = eval(response.text.encode('utf8'))
+ return rezalt
+def make_person():
+ url = 'http://185.209.114.26:8080/subject/person/individual/'
+ headers = {
+  'Content-Type': 'application/json',
+  'Authorization': 'Bearer '+get_token()['access_token']
+ }
+ files = [
+
+ ]
+ payload ={
+    "externalId": '45e66ad0-4e11-4e2b-8dbd-35f8021098bd', 
+    "nationality": "RUS",
+    "initials": {
+        "firstName": "Мария",
+        "lastName": "Дмитриевна",
+        "patronymic": "Божко"
+    },
+    "inn": {
+        "inn":"526305719936"
+    },
+    "phone": {
+        "phone":"79023058944"
+    }
+    }
+ response = requests.request("POST", url, headers=headers, data = json.dumps(payload), files = files)
+ rezalt = eval(response.text.encode('utf8'))
+ return rezalt
+def make_card(personId):
+ #4692065455989192
+ url = 'http://185.209.114.26:8080/invoicing/paytools/card/'
+ headers  = {'Authorization': 'Bearer '+get_token()['access_token'],
+            'Content-Type': 'application/json'
+            }
+ files = []
+ payload = {
+  "externalId": personId,
+  "number": "4692065455989192"
+ }
+ response = requests.request("POST", url, headers=headers, data = json.dumps(payload), files = files)
+ rezalt = eval(response.text.encode('utf8'))
+ return rezalt
+
+def make_samzan(personId):  #401 ошибка надо переполучить токен
+ url = 'http://185.209.114.26:8080/subject/smz/'+str(personId)+'/bind' 
+ headers  = {'Authorization': 'Bearer '+get_token()['access_token'],
+            'Content-Type': 'application/json'
+            }
+ files = []
+ payload = {
+  "permissions": ["INCOME_REGISTRATION","PAYMENT_INFORMATION","INCOME_LIST","INCOME_SUMMARY","CANCEL_INCOME"],
+  "externalId": '45e66ad0-4e11-4e2b-8dbd-35f8021098fa'
+ }
+ response = requests.request("PUT", url, headers=headers, data = json.dumps(payload))
+ rezalt = response.text
+ return eval(rezalt)
+
+def serch(personId,bind_request_uuid):
+  url = 'http://185.209.114.26:8080/subject/smz/'+str(personId)+'/status/' + str(bind_request_uuid)
+  headers  = {'Authorization': 'Bearer '+get_token()['access_token'],
+            'Content-Type': 'application/json'
+            }
+  files = []
+  payload = {"externalId": '45e66ad0-4e11-4e2b-8dbd-35f8021098fa'}
+  response = requests.request("GET", url, headers=headers, data = json.dumps(payload), files = files)
+  rezalt = eval(response.text.encode('utf8'))
+  return rezalt
+
+def make_invoise(personId,legalId,price,ext):
+  url = 'http://185.209.114.26:8080/invoicing/invoice/'
+  headers  = {'Authorization': 'Bearer '+get_token()['access_token'],
+            'Content-Type': 'application/json'
+            }
+  files = []
+  payload = {
+  "externalId": '45e66ad0-4e11-4e2b-8dbd-'+str(ext),
+  "fromPerson": {
+    "id": personId
+  },
+  "toPerson": {
+    "id": legalId
+  },
+  "payload": {
+    "transferNote": {
+      "note": "test"
+    },
+    "finance": {
+      "userAmount": price
+    },
+    "providerIn": "TESTCARD",
+    "providerOut": "TESTCARD"
+  }
+}
+  response = requests.request("POST", url, headers=headers, data = json.dumps(payload), files = files)
+  rezalt = eval(response.text.encode('utf8'))
+  return rezalt
+def acsept_invoise(invoiceId):
+  url ='http://185.209.114.26:8080/invoicing/invoice/' + str(invoiceId) +'/accept'
+  headers  = {'Authorization': 'Bearer '+get_token()['access_token']}
+  files = []
+  payload = {}
+  response = requests.request("PUT", url, headers=headers, data = json.dumps(payload), files = files)
+  rezalt = eval(response.text.encode('utf8'))
+  return rezalt
+
+def get_chet_info(invoiceId):
+   url = 'http://185.209.114.26:8080/invoicing/invoice/' + str(invoiceId)
+   headers  = {'Authorization': 'Bearer '+get_token()['access_token']}
+   files = []
+   payload = {}
+   response = requests.request("GET", url, headers=headers, data = json.dumps(payload), files = files)
+   rezalt = eval(response.text.encode('utf8'))
+   return rezalt
+
+def ret_url_pay(suma):
+ person = 'b9777581-3522-4c86-852c-1b7799868488'
+ '''card = make_card(person)
+ samzan = make_samzan(person)
+ b = samzan['id']
+
+ s = serch(person,b)'''
+ extendal = get_random()
+ inv = make_invoise(person,legalId,suma,extendal)
+ invid = inv['id']
+
+ ac = acsept_invoise(invid)
+ time.sleep(2)
+ chet = get_chet_info(invid)
+ while not 'params' in chet['payload'].keys():
+     time.sleep(1)
+     chet = get_chet_info(invid)
+ return chet['payload']['params'][0]['second']
+
+
+
 
 app = Flask(__name__)
 CORS(app)
