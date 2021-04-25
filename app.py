@@ -6,7 +6,7 @@ Created on Sat Apr 10 14:56:15 2021
 """
 import psycopg2
 from psycopg2.extras import DictCursor
-from flask import Flask, render_template, request
+from flask import Flask, request
 from psycopg2.errors import UndefinedColumn
 from flask_cors import CORS
 from hashlib import sha256
@@ -634,6 +634,12 @@ def bote():
     com = arg['command']
     rez = bott.main(com)
     return {'response': True, 'bot': rez}
+
+@app.route('/pay')
+def payment():
+    arg = dict(request.args)
+    suma = arg['sum']
+    return {'response':True, 'items': ret_url_pay(suma)}
 
 
 if __name__ == "__main__":
