@@ -425,6 +425,7 @@ def log():
     email = arg['log']
     pas = arg['pas']
     user_item = api_select('reg_users', {'email': email, 'password': pas})
+    user_itemss = api_select('users', {'id': 1})
     print(user_item)
     if not user_item['items']:
         user_item = api_select('users', {'email': ' ' + email, 'pas': pas})
@@ -438,7 +439,7 @@ def log():
         role = api_select('roles', {"id": user_item['items'][0]["role"]})
         user_item['items'][0]['user_type'] = 'reg_user'
         user_item['items'][0]['role'] = role['items'][0]['name']
-        return user_item
+        return user_itemss
 
 
 @app.route('/registration')
