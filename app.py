@@ -16,9 +16,9 @@ import time
 import uuid
 import requests
 import json
-'''true = True
+true = True
 false = False
-null =False'''
+null =False
 
 legalId = '45e66ad0-4e11-4e2b-8dbd-35f8021098bd'
 mailerLogin = 'dima160899@yandex.ru'
