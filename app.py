@@ -16,6 +16,21 @@ import time
 import uuid
 import requests
 import json
+
+import nltk
+def mat_filt(text):
+    MAT = ['бля','блять','хуй','пизда','пиздец','ебать','ебаный','мудак']
+    text = text.split(' ')
+    for i in range(len(text)):
+        for mat in MAT:
+            dist = nltk.edit_distance(mat, text[i].lower())
+            print(dist)
+            if dist <2:
+                text[i]="***"
+                break
+    rezalt =' '.join(text)
+    return rezalt
+
 true = True
 false = False
 null =False
@@ -112,6 +127,7 @@ def sql_insert(table_name, param):
 
 
 def sql_update(table_name, param):
+   
     if param['id']:
         conn = psycopg2.connect(dbname=database, user=user,
                                 password=password, host=host)
@@ -224,6 +240,18 @@ def find_id(pole, znah, ardict):
     for i in ardict:
         if int(i[str(pole)]) == int(znah):
             return i
+
+def find_ids(pole, znah, ardict):
+    rez=[]
+   
+    for i in ardict:
+        try:
+         if int(i[str(pole)]) == int(znah):
+            rez.append(i)
+        except:
+            True
+    return rez
+
 
 def is_token_valid(token):
     args = {'token': token};
@@ -505,9 +533,14 @@ def indexboard():
     users = sql_select('users', '')
     for i in param['items']:
         st1 = find_id('id', i['maker'], users['items'])
-        st2 = find_id('id', i['person'], users['items'])
+        
         i['maker'] = st1['name']
-        i['person'] = st2['name']
+        try:
+            n = int(i['person'])
+            st2 = find_id('id', i['person'], users['items'])
+            i['person'] = st2['name']
+        except:
+            True
         i['img'] = st1['img']
 
     return {'response': True, 'items': param['items']}
@@ -584,6 +617,26 @@ def index():
     print(arg)
     return api_select(str(name), arg)
 
+@app.route('/set_message')
+def index01():
+    arg = dict(request.args)
+    name = arg['table']
+    arg['text']=mat_filt(arg['text'])
+    del (arg['table'])
+    table_name = str(name)
+    param = param_insert(dict(arg))
+    conn = psycopg2.connect(dbname=database, user=user,
+                            password=password, host=host)
+    cursor = conn.cursor(cursor_factory=DictCursor)
+    insertstr = "INSERT INTO " + str(table_name) + " " + str(param[0]) + " VALUES " + str(param[1]) + " RETURNING id"
+    cursor.execute(insertstr)
+    _id = cursor.fetchone()[0]
+    
+    conn.commit()
+    conn.close()
+    cursor.close()
+    return {'response': True, 'id': str(_id),'text':arg['text']}
+
 
 @app.route('/set_data')
 def index1():
@@ -641,6 +694,105 @@ def payment():
     arg = dict(request.args)
     suma = arg['sum']
     return {'response':True, 'items': ret_url_pay(suma)}
+
+@app.route('/mapmetrik')
+def mapmetr():
+    arg = dict(request.args)
+    ids = int(arg['user'])
+    user = sql_select('users', param_select({'id': ids}))
+    user = int(user['items'][0]['m5'])
+    sql_update('users',param_update({'id': ids, 'M5': str(user+1)}))
+    return {'response':True}
+
+
+@app.route('/commandmetrik')
+def commetr():
+    arg = dict(request.args)
+    ids = int(arg['user'])
+    rezalt =[]
+    
+    
+    user = sql_select('users', '')['items']
+    mes = sql_select('messages','')['items']
+    pr = sql_select('board','')['items']
+    idea = sql_select('idea','')['items']
+    
+    meenM1=0
+    meenM5=0
+    meenM6=0
+    meenM7=0
+    for i in user:
+      
+        meenM1+=int(i['M1'])
+        meenM5+=int(i['m5'])
+        meenM6+=int(i['M6'])
+        meenM7+=int(i['M7'])
+    u = len(user)
+    meenM1=int(meenM1/u)
+    meenM2 = int(len(mes)/len(user))
+    meenM3 = int(len(pr)/len(user))*5
+    meenM4 = int(len(idea)/len(user))*5
+    meenM5=int(meenM5/u)
+    meenM6=int(meenM6/u)
+    meenM7=int(meenM7/u)
+    
+    meens={}
+    meens['M1']=meenM1
+    meens['M2']=meenM2
+    meens['M3']=meenM3
+    meens['M4']=meenM4
+    meens['M5']=meenM5
+    meens['M6']=meenM6
+    meens['M7']=meenM7
+    
+    rs={}
+    od_com = [6,8,13,12,9]
+    for pipl in od_com:
+        rs[str(pipl)]={}
+        rs[str(pipl)]['img']=find_id('id', pipl, user)['img']
+        rs[str(pipl)]['name']=find_id('id', pipl, user)['name']
+        rs[str(pipl)]['M1']=int(find_id('id', pipl, user)['M1'])
+        
+        rs[str(pipl)]['M2']=len(find_ids('sender',pipl,mes))
+        rs[str(pipl)]['M3']=len(find_ids('person',pipl,pr))*5
+        rs[str(pipl)]['M4']=len(find_ids('maker',pipl,idea))*5
+        rs[str(pipl)]['M5']=int(find_id('id', pipl, user)['m5'])
+        rs[str(pipl)]['M6']=int(find_id('id', pipl, user)['M6'])
+        rs[str(pipl)]['M7']=int(find_id('id', pipl, user)['M7'])
+        rezalt.append(rs[str(pipl)])
+    
+    
+    
+    
+    return {'response':True,'items':{'team':rezalt,'metr':meens}}
+
+
+
+@app.route('/metriks')
+def metric():
+    arg = dict(request.args)
+    ids = arg['user']
+    user = sql_select('users', param_select({'id': ids}))
+    user = user['items'][0]
+    metrik ={}
+    metrik['M1']=int(user['M1'])
+    metrik['M7']=int(user['M7'])
+    metrik['M6']=int(user['M6'])
+    
+    metrik['m5']=100 - int(user['m5'])
+    
+    mes = sql_select('messages', param_select({'sender': ids}))
+    metrik['M2']=len(mes['items'])
+    
+    pr = sql_select('board', param_select({'person': ids}))
+    metrik['M3']=len(pr['items'])*5
+    
+    idea = sql_select('idea', param_select({'maker': ids}))
+    metrik['M4']=len(idea['items'])*5
+    
+    
+   
+    return {'response':True, 'items': metrik}
 
 
 if __name__ == "__main__":
