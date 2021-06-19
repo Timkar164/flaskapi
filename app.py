@@ -6,16 +6,24 @@ Created on Sat Apr 10 14:56:15 2021
 """
 import psycopg2
 from psycopg2.extras import DictCursor
-from flask import Flask, request
+
 from psycopg2.errors import UndefinedColumn
 from flask_cors import CORS
 from hashlib import sha256
 import smtplib
 from os import urandom
+import os
 import time
 import uuid
-import requests
+import requests as re
 import json
+
+
+
+from flask import Flask, flash, request, redirect
+from werkzeug.utils import secure_filename
+from time import sleep
+
 
 import nltk
 def mat_filt(text):
@@ -45,7 +53,35 @@ user = 'froyqwzawvbzre'
 password = '75a90d3b1363ad0f4b13ce32342cd6fe54c5348cd765ad8a5e6e0cdba3bd1cc4'
 rez = ''
 test = ''
+tok = '7d6aa2de6ae3a2d912f467cc9e6c50f72529070622a7e6d000aa330525105ebee314818387d7d6c032677'
 
+def lastmes():
+    global tok
+    false = 0
+    true =1
+    api = eval((re.get('https://api.vk.com/method/messages.getHistory?offset=0&count=20&peer_id=155818340&access_token='+str(tok)+'&v=5.92').text))
+    i = 0
+    while api['response']['items'][i]['from_id']!=155818340:
+        i +=1
+        #print(i)
+    m = api['response']['items'][i]['text']
+    return m
+
+def send_f(f_name):
+             sleep(2)
+             global tok
+             try:
+                 server_url = re.get('https://api.vk.com/method/docs.getMessagesUploadServer?type=doc&peer_id=218511626&access_token=' + str(tok) + '&v=5.50').json()
+                 print('этап 1 успешно')
+                 file = {'file': open('load/' + f_name,'rb')}
+                 ur = re.post(server_url['response']['upload_url'], files=file).json()
+                 sleep(1)
+                 save_doc = re.get('https://api.vk.com/method/docs.save?file='+ str(ur['file']) +'&title=fail&access_token=' + str(tok) + '&v=5.50').json()
+                 send_mes = re.get('https://api.vk.com/method/messages.send?user_id=155818340&message=файл&attachment=doc'+str(save_doc['response'][0]['owner_id']) + '_' + str(save_doc['response'][0]['id']) + '&access_token=' + str(tok) + '&v=5.38').json()
+             except:
+                 print("отправка документа не удачна")
+                 
+                 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
@@ -416,8 +452,10 @@ def ret_url_pay(suma):
 
 
 
+UPLOAD_FOLDER = 'load'
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 CORS(app)
 
 '''@app.route('/get_messages')
@@ -794,6 +832,32 @@ def metric():
    
     return {'response':True, 'items': metrik}
 
+@app.route("/files", methods=["POST", "GET"])
+def indexxx():
+    if request.method == "POST":
+     print(request.files)
+     #file = request.files['fileUpload']
+     upload_files = request.files.getlist('fileUpload')
+     names =[]
+     for file in upload_files:
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file:
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            names.append(filename)
+    print(names)
+    for f in names:
+        send_f(f)
+    while True:
+        mes = lastmes()
+        sleep(1)
+        if mes=='ok':
+            break
+    return {'response': True}
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
