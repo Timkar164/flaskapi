@@ -26,6 +26,7 @@ from time import sleep
 
 
 import nltk
+
 def mat_filt(text):
     MAT = ['бля','блять','хуй','пизда','пиздец','ебать','ебаный','мудак']
     text = text.split(' ')
