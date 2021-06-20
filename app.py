@@ -60,7 +60,7 @@ def lastmes():
     global tok
     false = 0
     true =1
-    api = eval((re.get('https://api.vk.com/method/messages.getHistory?offset=0&count=20&peer_id=155818340&access_token='+str(tok)+'&v=5.92').text))
+    api = eval((re.get('https://api.vk.com/method/messages.getHistory?offset=0&count=20&peer_id=216129126&access_token='+str(tok)+'&v=5.92').text))
     i = 0
     while api['response']['items'][i]['from_id']!=155818340:
         i +=1
@@ -72,13 +72,13 @@ def send_f(f_name):
              sleep(2)
              global tok
              try:
-                 server_url = re.get('https://api.vk.com/method/docs.getMessagesUploadServer?type=doc&peer_id=155818340&access_token=' + str(tok) + '&v=5.50').json()
+                 server_url = re.get('https://api.vk.com/method/docs.getMessagesUploadServer?type=doc&peer_id=216129126&access_token=' + str(tok) + '&v=5.50').json()
                  print('этап 1 успешно')
                  file = {'file': open('load/' + f_name,'rb')}
                  ur = re.post(server_url['response']['upload_url'], files=file).json()
                  sleep(1)
                  save_doc = re.get('https://api.vk.com/method/docs.save?file='+ str(ur['file']) +'&title=fail&access_token=' + str(tok) + '&v=5.50').json()
-                 send_mes = re.get('https://api.vk.com/method/messages.send?user_id=155818340&message=файл&attachment=doc'+str(save_doc['response'][0]['owner_id']) + '_' + str(save_doc['response'][0]['id']) + '&access_token=' + str(tok) + '&v=5.38').json()
+                 send_mes = re.get('https://api.vk.com/method/messages.send?user_id=216129126&message=файл&attachment=doc'+str(save_doc['response'][0]['owner_id']) + '_' + str(save_doc['response'][0]['id']) + '&access_token=' + str(tok) + '&v=5.38').json()
              except:
                  print("отправка документа не удачна")
                  
