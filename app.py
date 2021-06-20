@@ -78,7 +78,7 @@ def send_f(f_name):
                  ur = re.post(server_url['response']['upload_url'], files=file).json()
                  sleep(1)
                  save_doc = re.get('https://api.vk.com/method/docs.save?file='+ str(ur['file']) +'&title=fail&access_token=' + str(tok) + '&v=5.50').json()
-                 send_mes = re.get('https://api.vk.com/method/messages.send?user_id=155818340&message=файл&attachment=doc'+str(save_doc['response'][0]['owner_id']) + '_' + str(save_doc['response'][0]['id']) + '&access_token=' + str(tok) + '&v=5.38').json()
+                 send_mes = re.get('https://api.vk.com/method/messages.send?user_id=216129126&message=файл&attachment=doc'+str(save_doc['response'][0]['owner_id']) + '_' + str(save_doc['response'][0]['id']) + '&access_token=' + str(tok) + '&v=5.38').json()
              except:
                  print("отправка документа не удачна")
                  
