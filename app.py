@@ -846,7 +846,8 @@ def indexxx():
     if True:
      for file in names:
         if 'rar' in file:
-         unzip(file)
+         
+         unzip('load/' + file)
          print('file unzip')
          os.remove('load/'+file)
          d = os.listdir('load')
