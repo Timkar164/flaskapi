@@ -37,6 +37,7 @@ import patoolib
 PRinfo =''
 taksonom=0
 
+
 def analizate(taxonomi_index,direct):
     
     t = int(taxonomi_index)
@@ -842,7 +843,8 @@ def indexxx():
             names.append('anrar.rar')
     
     rez = {}
-    for file in names:
+    try:
+     for file in names:
         if 'rar' in file:
          unzip(file)
          os.remove('load/'+file)
@@ -866,6 +868,15 @@ def indexxx():
          PRinfo['meenf']=meen_f
          ttt = ["","AR", "Аналитик данных", "Распределённые системы", "Геймдизайнер", "Образовательный дата-инженер"]
          PRinfo['taks']=ttt[int(taksonom)]
+    except:
+        d=os.listdir('load')
+        d.remove('files.txt')
+        for f in d:
+            try:
+                shutil.rmtree('load/'+f)
+            except:
+                os.remove('load/'+f)
+            
     return jsonify({'response': True})
 @app.route("/getprogram", methods=["POST", "GET"])
 def ret_program():
