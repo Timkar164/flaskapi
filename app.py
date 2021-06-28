@@ -80,7 +80,7 @@ def analizate(taxonomi_index,direct):
         f = os.path.abspath(direct + "/" + ff + '/' + file)
         rezalt['percent']=main.get_value(f, words)
         rezalt['float']=multiplication.get_value(f, words)
-        #print("Percent: " + str(rezalt['percent']) + ", Float: " + str(rezalt['float']))
+        print("Percent: " + str(rezalt['percent']) + ", Float: " + str(rezalt['float']))
         rez['program'].append(rezalt)
         del(rezalt)
         
@@ -847,10 +847,12 @@ def indexxx():
      for file in names:
         if 'rar' in file:
          unzip(file)
+         print('file unzip')
          os.remove('load/'+file)
          d = os.listdir('load')
          d.remove('files.txt')
          rez['name'] = d[0]
+         print('st')
          rez['info'] = analizate(taksonom,'load/'+d[0])
          shutil.rmtree('load/'+d[0])
          PRinfo = rez
