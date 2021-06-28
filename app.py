@@ -843,7 +843,7 @@ def indexxx():
             names.append('anrar.rar')
     
     rez = {}
-    try:
+    if True:
      for file in names:
         if 'rar' in file:
          unzip(file)
@@ -869,15 +869,7 @@ def indexxx():
          ttt = ["","AR", "Аналитик данных", "Распределённые системы", "Геймдизайнер", "Образовательный дата-инженер"]
          PRinfo['taks']=ttt[int(taksonom)]
          print(PRinfo)
-    except:
-        d=os.listdir('load')
-        d.remove('files.txt')
-        for f in d:
-            try:
-                shutil.rmtree('load/'+f)
-            except:
-                os.remove('load/'+f)
-            
+  
     return jsonify({'response': True})
 @app.route("/getprogram", methods=["POST", "GET"])
 def ret_program():
