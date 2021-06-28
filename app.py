@@ -493,8 +493,9 @@ def ret_url_pay(suma):
 UPLOAD_FOLDER = 'load'
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 CORS(app)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 '''@app.route('/get_messages')
 def indexmes():
