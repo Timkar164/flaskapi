@@ -868,6 +868,7 @@ def indexxx():
          PRinfo['meenf']=meen_f
          ttt = ["","AR", "Аналитик данных", "Распределённые системы", "Геймдизайнер", "Образовательный дата-инженер"]
          PRinfo['taks']=ttt[int(taksonom)]
+         print(PRinfo)
     except:
         d=os.listdir('load')
         d.remove('files.txt')
