@@ -4,6 +4,8 @@ Created on Sat Apr 10 14:56:15 2021
 
 @author: timka
 """
+
+
 import psycopg2
 from psycopg2.extras import DictCursor
 
