@@ -18,15 +18,73 @@ import uuid
 import requests as re
 import json
 
-
+import shutil
 
 from flask import Flask, flash, request, redirect
 from werkzeug.utils import secure_filename
 from time import sleep
 
+from flask import jsonify
 
 import nltk
+import main
+import multiplication
+import pandas
+import patoolib
 
+PRinfo =''
+taksonom=0
+
+def analizate(taxonomi_index,direct):
+    
+    t = int(taxonomi_index)
+    taxes = (
+    "ML (AI)",
+    "AR",
+    "Аналитик данных",
+    "Распределённые системы",
+    "Геймдизайнер",
+    "Образовательный дата-инженер")
+    if taxes[t] in ("AR", "Аналитик данных", "Распределённые системы", "Геймдизайнер", "Образовательный дата-инженер"):
+        table = pandas.read_excel("./Таксономии на основе анализа рынка труда.xlsx", sheet_name=taxes[t])
+        table = pandas.DataFrame(table)
+
+        keys, values = tuple(table["TaxLevelName2"]), tuple(table["%"])
+
+        words = dict()
+        for i in range(5):
+            words.setdefault(keys[i], values[i])
+    else:
+        table = pandas.read_excel("./Таксономии на основе анализа рынка труда.xlsx", sheet_name="ML (AI)")
+        table = pandas.DataFrame(table)
+
+        keys, values = tuple(table["Уровень таксономии2"]), tuple(table["%"])
+
+        words = dict()
+        for i in range(5):
+            words.setdefault(keys[i], values[i])
+    rezmaa = []
+    
+    for ff in os.listdir(direct):
+      rez ={}
+      rez['nameRPD']= str(ff)
+      rez['program'] =[]
+      for file in os.listdir(direct + '/' + ff):
+        if file.find(".docx") == -1 or file.find("~$") != -1:
+            continue
+        rezalt={}
+        rezalt['name']=file
+        f = os.path.abspath(direct + "/" + ff + '/' + file)
+        rezalt['percent']=main.get_value(f, words)
+        rezalt['float']=multiplication.get_value(f, words)
+        #print("Percent: " + str(rezalt['percent']) + ", Float: " + str(rezalt['float']))
+        rez['program'].append(rezalt)
+        del(rezalt)
+        
+      rezmaa.append(rez)
+      del(rez)
+    return rezmaa
+        
 def mat_filt(text):
     MAT = ['бля','блять','хуй','пизда','пиздец','ебать','ебаный','мудак']
     text = text.split(' ')
@@ -54,33 +112,10 @@ user = 'froyqwzawvbzre'
 password = '75a90d3b1363ad0f4b13ce32342cd6fe54c5348cd765ad8a5e6e0cdba3bd1cc4'
 rez = ''
 test = ''
-tok = '7d6aa2de6ae3a2d912f467cc9e6c50f72529070622a7e6d000aa330525105ebee314818387d7d6c032677'
+#tok = '7d6aa2de6ae3a2d912f467cc9e6c50f72529070622a7e6d000aa330525105ebee314818387d7d6c032677'
 
-def lastmes():
-    global tok
-    false = 0
-    true =1
-    api = eval((re.get('https://api.vk.com/method/messages.getHistory?offset=0&count=20&peer_id=216129126&access_token='+str(tok)+'&v=5.92').text))
-    i = 0
-    while api['response']['items'][i]['from_id']!=155818340:
-        i +=1
-        #print(i)
-    m = api['response']['items'][i]['text']
-    return m
-
-def send_f(f_name):
-             sleep(2)
-             global tok
-             try:
-                 server_url = re.get('https://api.vk.com/method/docs.getMessagesUploadServer?type=doc&peer_id=216129126&access_token=' + str(tok) + '&v=5.50').json()
-                 print('этап 1 успешно')
-                 file = {'file': open('load/' + f_name,'rb')}
-                 ur = re.post(server_url['response']['upload_url'], files=file).json()
-                 sleep(1)
-                 save_doc = re.get('https://api.vk.com/method/docs.save?file='+ str(ur['file']) +'&title=fail&access_token=' + str(tok) + '&v=5.50').json()
-                 send_mes = re.get('https://api.vk.com/method/messages.send?user_id=216129126&message=файл&attachment=doc'+str(save_doc['response'][0]['owner_id']) + '_' + str(save_doc['response'][0]['id']) + '&access_token=' + str(tok) + '&v=5.38').json()
-             except:
-                 print("отправка документа не удачна")
+def unzip(name):
+ patoolib.extract_archive("load/"+name, outdir="load")
                  
                  
 from sklearn.feature_extraction.text import CountVectorizer
@@ -782,9 +817,11 @@ def metric():
         name.append(m['names_of_rpd'])
     print(metrik)
     return {'response':True, 'name': name,'met': met}
-
+r = ''
 @app.route("/files", methods=["POST", "GET"])
 def indexxx():
+    global PRinfo
+    global taksonom
     if request.method == "POST":
      print(request.files)
      #file = request.files['fileUpload']
@@ -798,17 +835,48 @@ def indexxx():
             return redirect(request.url)
         if file:
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            names.append(filename)
-    print(names)
-    for f in names:
-        send_f(f)
-    while True:
-        mes = lastmes()
-        sleep(1)
-        if mes=='ok':
-            break
-    return {'response': True}
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'anrar.rar'))
+            names.append('anrar.rar')
+    
+    rez = {}
+    for file in names:
+        if 'rar' in file:
+         unzip(file)
+         os.remove('load/'+file)
+         d = os.listdir('load')
+         d.remove('files.txt')
+         rez['name'] = d[0]
+         rez['info'] = analizate(taksonom,'load/'+d[0])
+         shutil.rmtree('load/'+d[0])
+         PRinfo = rez
+         meen_p =0 
+         meen_f = 0
+         sh = 0
+         for i in PRinfo['info']:
+           for j in i['program']:
+              sh+=1
+              meen_p+=j['percent']
+              meen_f+=j['float']
+         meen_p=meen_p/sh
+         meen_f=meen_f/sh
+         PRinfo['meenp']=meen_p
+         PRinfo['meenf']=meen_f
+         ttt = ["","AR", "Аналитик данных", "Распределённые системы", "Геймдизайнер", "Образовательный дата-инженер"]
+         PRinfo['taks']=ttt[int(taksonom)]
+    return jsonify({'response': True})
+@app.route("/getprogram", methods=["POST", "GET"])
+def ret_program():
+    global PRinfo
+    return jsonify({'response':PRinfo})
+
+@app.route("/settaks", methods=["POST", "GET"])
+def set_taks():
+    global taksonom
+    arg = dict(request.args)
+    taks = arg['taks']
+    taksonom = taks
+    return jsonify({'response':True})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
+
