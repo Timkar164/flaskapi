@@ -33,11 +33,29 @@ import main
 import multiplication
 import pandas
 import patoolib
+import shutil
+import zipfile
+
 
 PRinfo =''
 taksonom=0
 
+def unpack_zipfile(filename, extract_dir, encoding='cp437'):
+    with zipfile.ZipFile(filename) as archive:
+        for entry in archive.infolist():
+            name = entry.filename.encode('cp437').decode(encoding)  # reencode!!!
 
+            # don't extract absolute paths or ones with .. in them
+            if name.startswith('/') or '..' in name:
+                continue
+
+            target = os.path.join(extract_dir, *name.split('/'))    
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            if not entry.is_dir():  # file
+                with archive.open(entry) as source, open(target, 'wb') as dest:
+                    shutil.copyfileobj(source, dest)
+                    
+                    
 def analizate(taxonomi_index,direct):
     
     t = int(taxonomi_index)
@@ -848,7 +866,8 @@ def indexxx():
         if 'rar' in file:
          print(file)
          print(os.listdir('load'))
-         unzip(file)
+         #unzip(file)
+         unpack_zipfile('load/'+file, r'load', encoding='cp866')
          print('file unzip')
          os.remove('load/'+file)
          d = os.listdir('load')
